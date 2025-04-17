@@ -15,11 +15,16 @@ from captum.attr import LRP, Lime, Occlusion, GuidedGradCam
 
 from PIL import Image
 from torchvision import transforms 
+from torchvision.transforms.functional import to_pil_image
 
 from utils.load import efficientnet_v2_s_preprocess, efficientnet_b6_preprocess, reverse_normalization, tensor_to_pil_image, resnet_50_preprocess
 import numpy as np
 
 import matplotlib.pyplot as plt
+
+# from pytorch_grad_cam import GradCAM
+
+
 
 def plot_attr_as_heatmap(attr, original_image):
     """
@@ -76,11 +81,31 @@ def load_efficientnet_v2_s():
     return model
 
 
+def normalize_and_convert_to_image(attr):
+    """
+    Normalize the attribution tensor and convert it to a PIL image.
+
+    Args:
+        attr (torch.Tensor): The attribution tensor (C, H, W) with possible negative values.
+
+    Returns:
+        PIL.Image.Image: The normalized PIL image.
+    """
+    # Normalize the tensor to the range [0, 1]
+    attr_min = attr.min()
+    attr_max = attr.max()
+    normalized_attr = (attr - attr_min) / (attr_max - attr_min + 1e-8)  # Add epsilon to avoid division by zero
+
+    # Convert the normalized tensor to a PIL image
+    return to_pil_image(normalized_attr * 255)
+
+
+
 def load_image(image_path = "imagenet_val/00100/87469483327336.jpg") : 
     image = Image.open(image_path)
     # transformation 
-    image_pre = efficientnet_b6_preprocess(image)
-    # image_pre = resnet_50_preprocess(image)
+    # image_pre = efficientnet_b6_preprocess(image)
+    image_pre = resnet_50_preprocess(image)
 
     # temp = reverse_normalization(image_pre)
     # tensor_to_pil_image(temp).show()
@@ -98,13 +123,14 @@ def main():
     # exit()
 
     # for resnet50
-    # layer = model.layer4[-1].conv3
-    # layer = model.layer4[-1].conv2
-    layer = model.avgpool
+    layer = model.layer4[-1].conv3
+    # layer = model.layer4[-1]
+
 
     # for efficientnetb6
-    # layer = model.avgpool
-    # layer = model.features[0][0]
+    # layer = [model.features[i][2].block[-1] for i in range(1,8)]
+    # layer = model.features[7][2].block[-1][0]
+    # layer = model.features[6][-1]
 
     print("Layer: ", layer)
 
@@ -120,11 +146,20 @@ def main():
     grad_cam_model = GuidedGradCam(model, layer)
     attr = grad_cam_model.attribute(img.unsqueeze(0), target= max_idx)
     attr = attr[0]
-
-
-
     tensor_to_pil_image(attr).show()
-    tensor_to_pil_image(attr.clamp(min = 0, max = 255)).show()
+    tensor_to_pil_image(reverse_normalization(img)).show()
+
+    # gradcam = GradCAM(model, layer)
+    # attr = gradcam(img.unsqueeze(0), targets=max_idx)
+    # attr = attr[0]
+    # tensor_to_pil_image(attr).show()
+
+
+
+
+    # normalize_and_convert_to_image(attr).show()
+    # tensor_to_pil_image(reverse_normalization(attr)).show()
+    # tensor_to_pil_image(attr.clamp(min = 0, max = 255)).show()
 
     # plot_attr_as_heatmap(attr.clamp(min = 0, max = 255), reverse_normalization(img))
 
@@ -135,7 +170,7 @@ def main():
     # tensor_to_pil_image(attr).show()
 
 
-    # # Lime
+    # Lime
     # lime = Lime(model)
     # attr = lime.attribute(img.unsqueeze(0), target=max_idx)
     # attr = attr[0]
