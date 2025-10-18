@@ -1,187 +1,71 @@
+import os
+from dotenv import load_dotenv
+from utils.auth import setup_huggingface
+from utils.load import load_blip_captioning, tensor_to_pil_image, generate_caption, evaluate_caption
+from xai.hook import create_hook_functions, processed_grads
+from utils.image_utils import read_image, denormalize_image, display_images, visualize_heatmap_overlay
 import torch
-from torchvision.models import (
-    efficientnet_b6, 
-    resnet50, 
-    ResNet50_Weights, 
-    efficientnet_v2_s, 
-    EfficientNet_V2_S_Weights, 
-    EfficientNet_B6_Weights, 
-    vit_b_16,
-    ViT_B_16_Weights
-)
 
-import captum 
-from captum.attr import LRP, Lime, Occlusion, GuidedGradCam
+load_dotenv()
+setup_huggingface()
 
-from PIL import Image
-from torchvision import transforms 
-from torchvision.transforms.functional import to_pil_image
-
-from utils.load import efficientnet_v2_s_preprocess, efficientnet_b6_preprocess, reverse_normalization, tensor_to_pil_image, resnet_50_preprocess
-import numpy as np
-
-import matplotlib.pyplot as plt
-
-# from pytorch_grad_cam import GradCAM
-
-
-
-def plot_attr_as_heatmap(attr, original_image):
-    """
-    Plots the attribution map as a heatmap overlaid on the original image.
-
-    Args:
-        attr (torch.Tensor): The attribution map tensor.
-        original_image (PIL.Image): The original image.
-    """
-    attr = attr.detach().cpu().numpy()
-    attr = np.mean(attr, axis=0)  # Average across color channels if needed
-
-    # Normalize the attribution map
-    attr = (attr - np.min(attr)) / (np.max(attr) - np.min(attr) + 1e-8)
-
-    # Convert original image to numpy array
-    original_image_np = np.array(original_image)
-
-    # If the image is in (C, H, W), transpose it to (H, W, C)
-    if original_image_np.shape[0] == 3:  # Check if it's in (C, H, W)
-        original_image_np = np.transpose(original_image_np, (1, 2, 0))
-
-    # Plot the heatmap
-    plt.figure(figsize=(8, 8))
-    plt.imshow(original_image_np)
-    plt.imshow(attr, cmap='jet', alpha=0.5)  # Overlay heatmap with transparency
-    plt.axis('off')
-    plt.title("Attribution Heatmap")
-    plt.show()
-
-
-# GPU check
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-print("device : ", device)
-
-
-
-def load_efficientnet_b6():
-    # Load the EfficientNet V2 S model with pretrained weights
-    model = efficientnet_b6(weights=EfficientNet_B6_Weights.IMAGENET1K_V1)
-    model.eval()  # Set the model to evaluation mode
-    return model
-
-def load_resnet_50():
-    # Load the ResNet-50 model with pretrained weights
-    model = resnet50(weights=ResNet50_Weights.IMAGENET1K_V1)
-    model.eval()  # Set the model to evaluation mode
-    return model
-
-def load_efficientnet_v2_s():
-    # Load the EfficientNet V2 S model with pretrained weights
-    model = efficientnet_v2_s(weights=EfficientNet_V2_S_Weights.IMAGENET1K_V1)
-    model.eval()  # Set the model to evaluation mode
-    return model
-
-
-def normalize_and_convert_to_image(attr):
-    """
-    Normalize the attribution tensor and convert it to a PIL image.
-
-    Args:
-        attr (torch.Tensor): The attribution tensor (C, H, W) with possible negative values.
-
-    Returns:
-        PIL.Image.Image: The normalized PIL image.
-    """
-    # Normalize the tensor to the range [0, 1]
-    attr_min = attr.min()
-    attr_max = attr.max()
-    normalized_attr = (attr - attr_min) / (attr_max - attr_min + 1e-8)  # Add epsilon to avoid division by zero
-
-    # Convert the normalized tensor to a PIL image
-    return to_pil_image(normalized_attr * 255)
-
-
-
-def load_image(image_path = "imagenet_val/00100/87469483327336.jpg") : 
-    image = Image.open(image_path)
-    # transformation 
-    # image_pre = efficientnet_b6_preprocess(image)
-    image_pre = resnet_50_preprocess(image)
-
-    # temp = reverse_normalization(image_pre)
-    # tensor_to_pil_image(temp).show()
-    return image_pre
-
-
-def main():
-    # model = load_efficientnet_b6()
-    model = load_resnet_50()
-    # model = load_efficientnet_v2_s()
-
-    # model = vit_b_16(weights=ViT_B_16_Weights.IMAGENET1K_V1)
-    # model.eval()
-    # print(model)
-    # exit()
-
-    # for resnet50
-    layer = model.layer4[-1].conv3
-    # layer = model.layer4[-1]
-
-
-    # for efficientnetb6
-    # layer = [model.features[i][2].block[-1] for i in range(1,8)]
-    # layer = model.features[7][2].block[-1][0]
-    # layer = model.features[6][-1]
-
-    print("Layer: ", layer)
-
-    # image loading 
-    img = load_image()
-    
-    # get class number
-    output = model(img.unsqueeze(0))
-    max_idx = torch.argmax(output, dim=1).item()
-    print("Class ID : ", max_idx)
-
-    # grad cam 
-    grad_cam_model = GuidedGradCam(model, layer)
-    attr = grad_cam_model.attribute(img.unsqueeze(0), target= max_idx)
-    attr = attr[0]
-    tensor_to_pil_image(attr).show()
-    tensor_to_pil_image(reverse_normalization(img)).show()
-
-    # gradcam = GradCAM(model, layer)
-    # attr = gradcam(img.unsqueeze(0), targets=max_idx)
-    # attr = attr[0]
-    # tensor_to_pil_image(attr).show()
-
-
-
-
-    # normalize_and_convert_to_image(attr).show()
-    # tensor_to_pil_image(reverse_normalization(attr)).show()
-    # tensor_to_pil_image(attr.clamp(min = 0, max = 255)).show()
-
-    # plot_attr_as_heatmap(attr.clamp(min = 0, max = 255), reverse_normalization(img))
-
-    # # LRP 
-    # lrp = LRP(model)
-    # attr = lrp.attribute(img.unsqueeze(0), target=max_idx)
-    # attr = attr[0]
-    # tensor_to_pil_image(attr).show()
-
-
-    # Lime
-    # lime = Lime(model)
-    # attr = lime.attribute(img.unsqueeze(0), target=max_idx)
-    # attr = attr[0]
-    # tensor_to_pil_image(attr).show()
-
-
-    # print("attr : ", attr)
-    # print("attr shape : ", attr.shape)
-
-
-    pass
 
 if __name__ == "__main__":
-    main()
+    processor, model = load_blip_captioning()
+    
+    prod_image = read_image("./images/black_suit.webp")
+    inputs = processor(images=prod_image,  return_tensors="pt", do_rescale=True)
+    img = inputs.pixel_values
+
+
+    decoder_output = {}
+    gradients = {}
+    
+    decoder_hook, gradient_hook = create_hook_functions(decoder_output, gradients)
+
+    frwd_hook = model.text_decoder.cls.predictions.decoder.register_forward_hook(decoder_hook)
+    back_hook = model.vision_model.encoder.layers[11].register_full_backward_hook(
+        lambda module, grad_input, grad_output: gradient_hook(module, grad_input, grad_output, "vision_encoder_layer_11")
+    )
+
+    # Generate caption using the function from utils
+    # generated_ids = generate_caption(model, processor, img)
+    generated_ids = model.generate(
+        img,
+        max_length=30,
+        do_sample=True,
+        # top_k=5,
+        top_p=0.8,
+        temperature=0.8,
+        num_beams=3
+    )
+
+    # Decode the generated caption
+    caption = processor.tokenizer.decode(generated_ids[0], skip_special_tokens=True)
+    print(f"Generated caption: {caption}")
+
+    # Get reference caption from user input
+    print("\n" + "="*50)
+    print("CAPTION EVALUATION")
+    print("="*50)
+    reference_caption = input("Enter the reference/ground truth caption: ")
+    
+    if reference_caption.strip():
+        # Calculate evaluation metrics
+        scores = evaluate_caption(caption, reference_caption)
+        
+        print(f"\nEvaluation Results:")
+        print(f"Generated: {caption}")
+        print(f"Reference: {reference_caption}")
+        print(f"BLEU Score: {scores['bleu_score']:.4f}")
+        print(f"CHRF Score: {scores['chrf_score']:.4f}")
+    else:
+        print("No reference caption provided. Skipping evaluation.")
+
+    # predictions
+    predictions = decoder_output["last_layer"][0]
+
+    # for grads in processed_grads(predictions, model, processor, gradients, layer_name = "vision_encoder_layer_11") :
+    #    visualize_heatmap_overlay(grads[0], img[0]) 
+
+    
