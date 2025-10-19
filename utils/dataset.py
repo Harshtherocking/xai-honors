@@ -1,4 +1,4 @@
-from datasets import Dataset, Features, Value, ClassLabel, Image, load_dataset, DatasetDict
+from datasets import Dataset, load_dataset
 
 def load_dataset_from_hub () -> Dataset:
     ds = load_dataset("Harshtherocking/indian-fashion-ecommerce")
