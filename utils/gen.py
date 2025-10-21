@@ -8,7 +8,7 @@ def generate_caption_logits (inputs, model, processor, max_length=30):
     # generated_ids = inputs["input_ids"]
     # attention_mask = inputs["attention_mask"]
     generated_ids = torch.tensor([
-        [101]
+        [processor.tokenizer.cls_token_id]
     ])
 
     for i in range(max_length):

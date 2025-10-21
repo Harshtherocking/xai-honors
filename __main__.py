@@ -1,18 +1,22 @@
 import os
-from dotenv import load_dotenv
-from utils.auth import setup_huggingface
-from utils.load import load_blip_captioning, tensor_to_pil_image, generate_caption, evaluate_caption
-from xai.hook import create_hook_functions, processed_grads
-from utils.image_utils import read_image, denormalize_image, display_images, visualize_heatmap_overlay
+from utils.load import load_blip
+# from xai.hook import create_hook_functions, processed_grads
 import torch
+from PIL import Image
+from utils.dataset import load_dataset_from_hub
 
-load_dotenv()
-setup_huggingface()
+import config
+from utils.gen import generate_caption_logits
+from utils.train import train
 
+DEVICE = config.DEVICE
 
 if __name__ == "__main__":
-    processor, model = load_blip_captioning()
-    
+    model, processor = load_blip()
+    dataset = load_dataset_from_hub(processor, train)
+    exit()
+
+
     prod_image = read_image("./images/black_suit.webp")
     inputs = processor(images=prod_image,  return_tensors="pt", do_rescale=True)
     img = inputs.pixel_values
