@@ -16,9 +16,9 @@ OUTPUT_DIR = "./output"
 TARGET_MODULES = {
     "blip" : [
         "encoder.layer[:].attention.self.query",
-        "attention.self.key",
-        "attention.self.value",
-        "attention.output.dense"
+        "encoder.layer[:].attention.self.key",
+        "encoder.layer[:].attention.self.value",
+        "encoder.layer[:].attention.output.dense"
     ]
 }
 
@@ -44,6 +44,6 @@ training_args = TrainingArguments(
     save_strategy="epoch",
     logging_strategy="steps",
     logging_steps=50,
-    remove_unused_columns=False,  # important when returning dicts
+    remove_unused_columns=True,  # important when returning dicts
     push_to_hub=False,
 )
