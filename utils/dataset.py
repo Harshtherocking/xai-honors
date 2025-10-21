@@ -4,6 +4,7 @@ import io
 from PIL import Image
 import requests
 import os
+import numpy as np
 import torch
 
 
@@ -18,7 +19,12 @@ def preprocess_function(samples, processor):
         if os.path.exists(p) :
             images.append(Image.open(p))
         else :
-            images.append( Image.open(io.BytesIO(requests.get(url).content)))
+            try :
+                images.append(Image.open(io.BytesIO(requests.get(url).content)))
+            except Exception as e:
+                print(f"Exception : {e}\nFile : {p}\n --- using black image")
+                images.append(np.zeros(shape=(244,244,3)))
+
 
     inputs = processor(images=images, return_tensors="pt")  # pixel_values present
 
