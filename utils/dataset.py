@@ -13,10 +13,10 @@ def preprocess_function(samples, processor):
     paths = samples.get("image_path")
     # paths = [os.path.join(config.IMAGE_PATH , p) for p in paths]
     if os.path.exists(paths[0]) :
-        print("loading images from local")
+        # print("loading images from local")
         images = [Image.open(p) for p in paths]
     else :
-        print("downloading images")
+        # print("downloading images")
         images = [Image.open(io.BytesIO(requests.get(url).content)) for url in images]
 
     inputs = processor(images=images, return_tensors="pt")  # pixel_values present
