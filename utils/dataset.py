@@ -9,15 +9,16 @@ import torch
 
 
 def preprocess_function(samples, processor):
-    images = samples.get("image_url")
+    images_url = samples.get("image_url")
     paths = samples.get("image_path")
     # paths = [os.path.join(config.IMAGE_PATH , p) for p in paths]
-    if os.path.exists(paths[0]) :
-        # print("loading images from local")
-        images = [Image.open(p) for p in paths]
-    else :
-        # print("downloading images")
-        images = [Image.open(io.BytesIO(requests.get(url).content)) for url in images]
+
+    images = []
+    for p, url in zip(paths,images_url):
+        if os.path.exists(p) :
+            images.append(Image.open(p))
+        else :
+            images.append( Image.open(io.BytesIO(requests.get(url).content)))
 
     inputs = processor(images=images, return_tensors="pt")  # pixel_values present
 
