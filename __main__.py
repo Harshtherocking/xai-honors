@@ -13,7 +13,7 @@ DEVICE = config.DEVICE
 
 if __name__ == "__main__":
     model, processor = load_blip()
-    dataset = load_dataset_from_hub(processor, train)
+    dataset = load_dataset_from_hub(processor, "train")
     exit()
 
 
