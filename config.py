@@ -3,7 +3,6 @@ from transformers import TrainingArguments
 from peft import LoraConfig, get_peft_model, prepare_model_for_kbit_training
 
 DEVICE = "cuda" if is_available() else "cpu"
-
 BATCH_SIZE = 16
 LR = 3e-4
 EPOCHS = 3
