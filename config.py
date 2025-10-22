@@ -33,7 +33,7 @@ TARGET_MODULES = {
         "language_model.layers[:].v_proj"
         "language_model.layers[:].o_proj"
         "language_model.layers[:].mlp"
-        "language_model.layers[:].lm_head"
+        "lm_head"
     ]
 }
 
