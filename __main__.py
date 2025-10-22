@@ -4,16 +4,16 @@ from utils.load import load_blip, load_qwenvl_v3, load_paligemma
 import torch
 from PIL import Image
 from utils.dataset import load_dataset_from_hub
-
+from utils.train import train, prepare_lora_model
 import config
 from utils.gen import generate_caption_logits
-from utils.train import train
 
+TF_ENABLE_ONEDNN_OPTS=0
 DEVICE = config.DEVICE
 
 if __name__ == "__main__":
     model, processor = load_blip()
-    dataset = load_dataset_from_hub(processor, "train")
+    dataset = load_dataset_from_hub(processor, split="train", subset_size= 20000)
     train(model,dataset)
     exit()
 

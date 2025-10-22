@@ -14,12 +14,9 @@ LORA_DROPOUT = 0.1
 OUTPUT_DIR = "./output"
 
 TARGET_MODULES = {
-    "blip" : [
-        "encoder.layer[:].attention.self.query",
-        "encoder.layer[:].attention.self.key",
-        "encoder.layer[:].attention.self.value",
-        "encoder.layer[:].attention.output.dense"
-    ],
+    "blip" : ["query", "key", "value", "dense","decoder"],
+
+    # update target values
     "paligemma" : [
         "language_model.layers[:].q_proj",
         "language_model.layers[:].k_proj",

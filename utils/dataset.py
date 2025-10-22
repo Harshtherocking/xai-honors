@@ -1,4 +1,4 @@
-from datasets import Dataset, load_dataset
+from datasets import Dataset, load_dataset, DatasetDict
 import config
 import io
 from PIL import Image
@@ -8,6 +8,7 @@ import numpy as np
 import torch
 
 
+num_proc = os.cpu_count()
 
 def preprocess_function(samples, processor):
     images_url = samples.get("image_url")
@@ -49,13 +50,88 @@ def preprocess_function(samples, processor):
 
 
 
-def load_dataset_from_hub (processor, split = None) -> Dataset:
-    ds = load_dataset("Harshtherocking/indian-fashion-ecommerce")
-    if split :
-        ds = ds[split]
-    ds.map(lambda x : preprocess_function(x,processor), batched=True, remove_columns=ds.column_names)
-    print(ds)
-    return ds
+def load_dataset_from_hub (processor, split = None, subset_size= None, num_proc = num_proc) -> Dataset:
+    dataset = load_dataset("Harshtherocking/indian-fashion-ecommerce")
+
+    # If a specific split is provided
+    if split is not None:
+        ds_split = dataset[split]
+
+        # subset if needed
+        if subset_size is not None and subset_size < len(ds_split):
+            ds_split = ds_split.shuffle(seed=42).select(range(subset_size))
+
+        ds_split = ds_split.map(
+            lambda x: preprocess_function(x, processor),
+            batched=True,
+            num_proc=num_proc,
+            remove_columns=ds_split.column_names,
+            load_from_cache_file=True,
+            desc=f"Processing {split} split",
+        )
+        return ds_split  # single split case → returns Dataset
+
+    # Else process all splits
+    processed_splits = {}
+    for split_name, ds_split in dataset.items():
+        if subset_size is not None and subset_size < len(ds_split):
+            ds_split = ds_split.shuffle(seed=42).select(range(subset_size))
+
+        ds_split = ds_split.map(
+            lambda x: preprocess_function(x, processor),
+            batched=True,
+            num_proc=num_proc,
+            remove_columns=ds_split.column_names,
+            load_from_cache_file=True,
+            desc=f"Processing {split_name} split",
+        )
+        processed_splits[split_name] = ds_split
+
+    processed_dataset = DatasetDict(processed_splits)
+    return processed_dataset
+
+    # processed_splits = {}
+    # for split, ds_split in dataset.items():
+    #     # take subset if specified
+    #     if subset_size is not None and subset_size < len(ds_split):
+    #         ds_split = ds_split.shuffle(seed=42).select(range(subset_size))
+    #
+    #     # parallel preprocessing
+    #     ds_split = ds_split.map(
+    #         lambda x: preprocess_function(x, processor),
+    #         batched=True,
+    #         num_proc=num_proc,
+    #         remove_columns=ds_split.column_names,
+    #         load_from_cache_file=True,
+    #         desc=f"Processing {split} split",
+    #     )
+    #
+    #     processed_splits[split] = ds_split
+    #
+    # # convert to DatasetDict (Hugging Face object)
+    # processed_dataset = DatasetDict(processed_splits)
+    # return processed_dataset
+
+    # if subset_size:
+    #     if split :
+    #         ds = ds.shuffle(seed=42).select(range(subset_size))
+    #     else :
+    #         for sp in ds.keys() :
+    #             ds = {k:v for k,v in zip(ds.keys(), ds[])}
+    #             pass
+    #
+    # if split :
+    #     ds = ds[split]
+    #
+    # print(ds)
+    #
+    # ds.map(lambda x : preprocess_function(x,processor),
+    #        batched=True,
+    #        remove_columns=ds.column_names,
+    #        num_proc= num_proc,
+    #        load_from_cache_file=True)
+    # print(ds)
+    # return ds
 
 
 if __name__ == "__main__" :
