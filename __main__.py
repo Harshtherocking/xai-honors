@@ -1,5 +1,5 @@
 import os
-from utils.load import load_blip
+from utils.load import load_blip, load_qwenvl_v3, load_paligemma
 # from xai.hook import create_hook_functions, processed_grads
 import torch
 from PIL import Image

@@ -1,6 +1,6 @@
 from torch.cuda import is_available
 from transformers import TrainingArguments
-from peft import LoraConfig, get_peft_model, prepare_model_for_kbit_training
+from peft import LoraConfig
 
 DEVICE = "cuda" if is_available() else "cpu"
 BATCH_SIZE = 16
@@ -19,6 +19,21 @@ TARGET_MODULES = {
         "encoder.layer[:].attention.self.key",
         "encoder.layer[:].attention.self.value",
         "encoder.layer[:].attention.output.dense"
+    ],
+    "paligemma" : [
+        "language_model.layers[:].q_proj",
+        "language_model.layers[:].k_proj",
+        "language_model.layers[:].v_proj"
+        "language_model.layers[:].mlp"
+        "lm_head"
+    ],
+    "qwen3-vl" : [
+        "language_model.layers[:].q_proj"
+        "language_model.layers[:].k_proj"
+        "language_model.layers[:].v_proj"
+        "language_model.layers[:].o_proj"
+        "language_model.layers[:].mlp"
+        "language_model.layers[:].lm_head"
     ]
 }
 
