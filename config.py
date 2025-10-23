@@ -11,7 +11,7 @@ LORA_R = 8
 LORA_ALPHA = 16
 LORA_DROPOUT = 0.1
 
-OUTPUT_DIR = "./output"
+OUTPUT_DIR = "./blip-ft"
 
 TARGET_MODULES = {
     "blip" : ["query", "key", "value", "dense","decoder"],
