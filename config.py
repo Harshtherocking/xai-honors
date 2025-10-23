@@ -1,12 +1,12 @@
 from torch.cuda import is_available
 from transformers import TrainingArguments
-from peft import LoraConfig
+from peft import LoraConfig, TaskType
 
 DEVICE = "cuda" if is_available() else "cpu"
 BATCH_SIZE = 16
 LR = 3e-4
 EPOCHS = 3
-MAX_TARGET_LENGTH = 32
+MAX_TARGET_LENGTH = 64
 LORA_R = 8
 LORA_ALPHA = 16
 LORA_DROPOUT = 0.1
@@ -41,7 +41,7 @@ lora_config = LoraConfig(
     target_modules=TARGET_MODULES["blip"],
     lora_dropout=LORA_DROPOUT,
     bias="none",
-    task_type="SEQ_2_SEQ_LM",  # for encoder-decoder captioning
+    # task_type=TaskType.CAUSAL_LM,  # for encoder-decoder captioning
 )
 
 training_args = TrainingArguments(

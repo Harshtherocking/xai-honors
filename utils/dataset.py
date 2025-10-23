@@ -7,7 +7,6 @@ import os
 import numpy as np
 import torch
 
-
 num_proc = os.cpu_count()
 
 def preprocess_function(samples, processor):
@@ -38,14 +37,13 @@ def preprocess_function(samples, processor):
         max_length=config.MAX_TARGET_LENGTH,
         return_tensors="pt",
     )
-    labels = tokenized["input_ids"]
+    input_ids = tokenized["input_ids"]
+    labels = tokenized["input_ids"].clone()
     # pad tokens to -100 to ignore in cross entropy loss
     labels[labels == processor.tokenizer.pad_token_id] = -100
 
-    batch = {}
-    batch["pixel_values"] = inputs.get('pixel_values')
-    batch["labels"] = labels
-    batch["attention_mask"] = tokenized["attention_mask"]
+    batch = {"pixel_values": inputs.get('pixel_values'), "labels": labels,
+             "attention_mask": tokenized["attention_mask"], "input_ids": input_ids}
     return batch
 
 
@@ -90,59 +88,16 @@ def load_dataset_from_hub (processor, split = None, subset_size= None, num_proc 
     processed_dataset = DatasetDict(processed_splits)
     return processed_dataset
 
-    # processed_splits = {}
-    # for split, ds_split in dataset.items():
-    #     # take subset if specified
-    #     if subset_size is not None and subset_size < len(ds_split):
-    #         ds_split = ds_split.shuffle(seed=42).select(range(subset_size))
-    #
-    #     # parallel preprocessing
-    #     ds_split = ds_split.map(
-    #         lambda x: preprocess_function(x, processor),
-    #         batched=True,
-    #         num_proc=num_proc,
-    #         remove_columns=ds_split.column_names,
-    #         load_from_cache_file=True,
-    #         desc=f"Processing {split} split",
-    #     )
-    #
-    #     processed_splits[split] = ds_split
-    #
-    # # convert to DatasetDict (Hugging Face object)
-    # processed_dataset = DatasetDict(processed_splits)
-    # return processed_dataset
-
-    # if subset_size:
-    #     if split :
-    #         ds = ds.shuffle(seed=42).select(range(subset_size))
-    #     else :
-    #         for sp in ds.keys() :
-    #             ds = {k:v for k,v in zip(ds.keys(), ds[])}
-    #             pass
-    #
-    # if split :
-    #     ds = ds[split]
-    #
-    # print(ds)
-    #
-    # ds.map(lambda x : preprocess_function(x,processor),
-    #        batched=True,
-    #        remove_columns=ds.column_names,
-    #        num_proc= num_proc,
-    #        load_from_cache_file=True)
-    # print(ds)
-    # return ds
 
 
-if __name__ == "__main__" :
-
-    data_files = {
-        "train": "data/train_data.json",
-        "validation": "data/val_data.json",
-        "test": "data/test_data.json"
+def blip_data_collator(batch):
+    pixel_values = torch.tensor(batch["pixel_values"])
+    labels = torch.tensor(batch["labels"])
+    attention_mask = torch.tensor(batch["attention_mask"])
+    input_ids = torch.tensor(batch["input_ids"])
+    return {
+        "pixel_values": pixel_values,
+        "labels": labels,
+        "attention_mask": attention_mask,
+        "input_ids": input_ids
     }
-
-    dataset = load_dataset("json", data_files=data_files)
-    print(dataset)
-
-    dataset.push_to_hub("Harshtherocking/indian-fashion-ecommerce")
