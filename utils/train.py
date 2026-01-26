@@ -11,7 +11,6 @@ DEVICE = config.DEVICE
 
 
 def prepare_lora_model (model, lora_config = config.lora_config) -> PeftModel:
-    model.to(DEVICE)
     peft_model = get_peft_model(model, lora_config)
     print(peft_model.print_trainable_parameters())
     return peft_model
@@ -19,7 +18,7 @@ def prepare_lora_model (model, lora_config = config.lora_config) -> PeftModel:
 
 def train (model, dataset) :
     peft_model = prepare_lora_model(model)
-    peft_model.to(DEVICE)
+    model = peft_model.to(DEVICE)
     model.train()
 
     optimizer  = AdamW(model.parameters(), lr= config.LR)
