@@ -45,18 +45,18 @@ lora_config = LoraConfig(
     # task_type=TaskType.CAUSAL_LM,  # for encoder-decoder captioning
 )
 
-training_args = TrainingArguments(
-    output_dir=OUTPUT_DIR,
-    per_device_train_batch_size=BATCH_SIZE,
-    per_device_eval_batch_size=BATCH_SIZE,
-    # evaluation_strategy="no",
-    num_train_epochs=EPOCHS,
-    learning_rate=LR,
-    fp16=is_available(),
-    save_total_limit=2,
-    save_strategy="epoch",
-    logging_strategy="steps",
-    logging_steps=50,
-    remove_unused_columns=True,  # important when returning dicts
-    push_to_hub=False,
-)
+# training_args = TrainingArguments(
+#     output_dir=OUTPUT_DIR,
+#     per_device_train_batch_size=BATCH_SIZE,
+#     per_device_eval_batch_size=BATCH_SIZE,
+#     # evaluation_strategy="no",
+#     num_train_epochs=EPOCHS,
+#     learning_rate=LR,
+#     fp16=is_available(),
+#     save_total_limit=2,
+#     save_strategy="epoch",
+#     logging_strategy="steps",
+#     logging_steps=50,
+#     remove_unused_columns=True,  # important when returning dicts
+#     push_to_hub=False,
+# )
