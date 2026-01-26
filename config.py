@@ -3,15 +3,15 @@ from transformers import TrainingArguments
 from peft import LoraConfig, TaskType
 
 DEVICE = "cuda" if is_available() else "cpu"
-DEVICE = "cpu"
 BATCH_SIZE = 16
 LR = 3e-4
-EPOCHS = 3
+EPOCHS = 30
 MAX_TARGET_LENGTH = 64
 LORA_R = 8
 LORA_ALPHA = 16
 LORA_DROPOUT = 0.1
 
+LOG_DIR = "./blip-logs"
 OUTPUT_DIR = "./blip-ft"
 
 TARGET_MODULES = {

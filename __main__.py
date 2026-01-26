@@ -10,11 +10,13 @@ from utils.gen import generate_caption_logits
 
 TF_ENABLE_ONEDNN_OPTS=0
 DEVICE = config.DEVICE
+breakpoint()
 
 if __name__ == "__main__":
     model, processor = load_blip()
-    dataset = load_dataset_from_hub(processor, split="train", subset_size= 20000)
-    train(model,dataset)
+    dataset = load_dataset_from_hub(processor, split="train")
+    val_dataset = load_dataset_from_hub(processor, split="validation")
+    train(model, dataset, processor, val_dataset)
     exit()
 
 
