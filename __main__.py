@@ -13,8 +13,8 @@ DEVICE = config.DEVICE
 if __name__ == "__main__":
     model, processor = load_blip()
     # model.from_pretrained(config.OUTPUT_DIR)
-    dataset = load_dataset_from_hub(processor, split="train", subset_size= 40000)
-    val_dataset = load_dataset_from_hub(processor, split="validation", subset_size= 5000)
+    dataset = load_dataset_from_hub(processor, split="train", subset_size= 20000)
+    val_dataset = load_dataset_from_hub(processor, split="validation", subset_size= 3000)
     train(model, dataset, processor, val_dataset)
     exit()
 
