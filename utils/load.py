@@ -36,7 +36,7 @@ def reverse_normalization(tensor):
 def load_blip() -> (AutoModelForImageTextToText, AutoProcessor):
     model_id = "Salesforce/blip-image-captioning-large"
     processor = BlipProcessor.from_pretrained(model_id, dtype ="auto", device_map="auto")
-    model = BlipForConditionalGeneration.from_pretrained(model_id, device = config.DEVICE)
+    model = BlipForConditionalGeneration.from_pretrained(model_id)
     return model, processor
 
 
