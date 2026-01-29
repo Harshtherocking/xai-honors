@@ -36,7 +36,7 @@ def train (model, dataset, processor : AutoProcessor, val_dataset : Dataset | No
         peft_model.train()
         ds_size = len(dataset)
         num_batches = ceil(ds_size /config.BATCH_SIZE)
-        print(f"Number of batches: {num_batches}")
+        # print(f"Number of batches: {num_batches}")
 
         epoch_loss = 0
         for batch in tqdm(range(num_batches),desc=f"Epoch {epoch}") :

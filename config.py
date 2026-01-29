@@ -5,7 +5,7 @@ from peft import LoraConfig, TaskType
 DEVICE = "cuda" if is_available() else "cpu"
 BATCH_SIZE = 16
 LR = 3e-4
-EPOCHS = 30
+EPOCHS = 100
 MAX_TARGET_LENGTH = 64
 LORA_R = 8
 LORA_ALPHA = 16

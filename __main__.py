@@ -8,14 +8,13 @@ from utils.train import train, prepare_lora_model
 import config
 from utils.gen import generate_caption_logits
 
-TF_ENABLE_ONEDNN_OPTS=0
 DEVICE = config.DEVICE
 
 if __name__ == "__main__":
     model, processor = load_blip()
     # model.from_pretrained(config.OUTPUT_DIR)
-    dataset = load_dataset_from_hub(processor, split="train", subset_size= 50000)
-    val_dataset = load_dataset_from_hub(processor, split="validation", subset_size=20000)
+    dataset = load_dataset_from_hub(processor, split="train", subset_size= 40000)
+    val_dataset = load_dataset_from_hub(processor, split="validation", subset_size= 5000)
     train(model, dataset, processor, val_dataset)
     exit()
 
