@@ -1,6 +1,14 @@
 from torch.cuda import is_available
-from transformers import TrainingArguments
-from peft import LoraConfig, TaskType
+from peft import LoraConfig
+
+
+HF_TOKEN = "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"
+
+MODEL = "blip"
+LOAD_PRETRAINED_MODEL = True
+
+
+IMAGE_SIZE = 224
 
 DEVICE = "cuda" if is_available() else "cpu"
 BATCH_SIZE = 16
@@ -11,52 +19,39 @@ LORA_R = 8
 LORA_ALPHA = 16
 LORA_DROPOUT = 0.1
 
-LOG_DIR = "./blip-logs"
-OUTPUT_DIR = "./blip-ft"
+LOG_DIR = f"./{MODEL}-logs"
+OUTPUT_DIR = f"./{MODEL}-ft"
 
 TARGET_MODULES = {
-    "blip" : ["query", "key", "value", "dense","decoder"],
+    "blip" : (
+        r"^text_decoder\.bert\.encoder\.layer\..*\."
+        r"(query|key|value|dense)$"
+        r"|^text_decoder\.cls\.predictions\.(transform\.dense|decoder)$"
+    ),
 
-    # update target values
-    "paligemma" : [
-        "language_model.layers[:].q_proj",
-        "language_model.layers[:].k_proj",
-        "language_model.layers[:].v_proj"
-        "language_model.layers[:].mlp"
-        "lm_head"
-    ],
-    "qwen3-vl" : [
-        "language_model.layers[:].q_proj"
-        "language_model.layers[:].k_proj"
-        "language_model.layers[:].v_proj"
-        "language_model.layers[:].o_proj"
-        "language_model.layers[:].mlp"
-        "lm_head"
-    ]
+    "paligemma" : (
+        r"^model\.language_model\..*(q_proj|k_proj|v_proj|o_proj|"
+        r"gate_proj|up_proj|down_proj)$"
+        r"|^lm_head$"
+    ),
+
+    "qwen3-vl" : (
+        r"^model\.language_model\.layers\..*\."
+        r"(q_proj|k_proj|v_proj|o_proj|gate_proj|up_proj|down_proj)$"
+        r"|^lm_head$"
+    )
 }
 
 
 lora_config = LoraConfig(
     r=LORA_R,
     lora_alpha=LORA_ALPHA,
-    target_modules=TARGET_MODULES["blip"],
+    target_modules=TARGET_MODULES[MODEL],
     lora_dropout=LORA_DROPOUT,
     bias="none",
     # task_type=TaskType.CAUSAL_LM,  # for encoder-decoder captioning
 )
 
-# training_args = TrainingArguments(
-#     output_dir=OUTPUT_DIR,
-#     per_device_train_batch_size=BATCH_SIZE,
-#     per_device_eval_batch_size=BATCH_SIZE,
-#     # evaluation_strategy="no",
-#     num_train_epochs=EPOCHS,
-#     learning_rate=LR,
-#     fp16=is_available(),
-#     save_total_limit=2,
-#     save_strategy="epoch",
-#     logging_strategy="steps",
-#     logging_steps=50,
-#     remove_unused_columns=True,  # important when returning dicts
-#     push_to_hub=False,
-# )
+
+# prior
+ALPHA = 0.8

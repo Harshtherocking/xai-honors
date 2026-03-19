@@ -1,7 +1,7 @@
 from peft import PeftModel, get_peft_model
 import config
 from torch.optim import AdamW, lr_scheduler
-from utils.dataset import blip_data_collator
+from utils.dataset import data_collator
 from math import ceil
 from tqdm import tqdm
 from torch.utils.tensorboard import SummaryWriter
@@ -43,16 +43,21 @@ def train (model, dataset, processor : AutoProcessor, val_dataset : Dataset | No
             end = min( (batch+1) * config.BATCH_SIZE, ds_size)
             batch_data = dataset[batch * config.BATCH_SIZE:end]
 
-            batch_data = blip_data_collator(batch_data)
+            batch_data = data_collator(batch_data)
             labels = batch_data["labels"].to(config.DEVICE)
             pixel_values = batch_data["pixel_values"].to(config.DEVICE)
             attention_mask = batch_data["attention_mask"].to(config.DEVICE)
             input_ids = batch_data["input_ids"].to(config.DEVICE)
+            if config.MODEL == "paligemma" :
+                token_type_ids = batch_data["token_type_ids"].to(config.DEVICE)
 
-            outputs = peft_model(input_ids=input_ids,
-                            pixel_values=pixel_values,
-                            labels=labels,
-                            attention_mask=attention_mask)
+            outputs = peft_model(
+                input_ids=input_ids,
+                pixel_values=pixel_values,
+                labels=labels,
+                attention_mask=attention_mask,
+                token_type_ids= token_type_ids if config.MODEL == "paligemma" else None,
+            )
 
             loss = outputs.loss
             epoch_loss += loss.item()
@@ -66,7 +71,7 @@ def train (model, dataset, processor : AutoProcessor, val_dataset : Dataset | No
 
         # validation
         if val_dataset is not None :
-            batch_data = blip_data_collator(val_dataset)
+            batch_data = data_collator(val_dataset)
             labels = batch_data["labels"].to(config.DEVICE)
             pixel_values = batch_data["pixel_values"].to(config.DEVICE)
             attention_mask = batch_data["attention_mask"].to(config.DEVICE)

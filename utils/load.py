@@ -8,7 +8,8 @@ from transformers import (
 )
 
 import config
-
+from config import HF_TOKEN
+from peft import PeftModel
 
 
 def reverse_normalization(tensor):
@@ -33,24 +34,36 @@ def reverse_normalization(tensor):
 
 
 
-def load_blip() -> (AutoModelForImageTextToText, AutoProcessor):
+def load_blip(dir : str | None = None) -> (AutoModelForImageTextToText, AutoProcessor):
     model_id = "Salesforce/blip-image-captioning-large"
-    processor = BlipProcessor.from_pretrained(model_id, dtype ="auto", device_map="auto")
-    model = BlipForConditionalGeneration.from_pretrained(model_id)
+    processor = BlipProcessor.from_pretrained(model_id, dtype ="auto", token= config.HF_TOKEN)
+    model = BlipForConditionalGeneration.from_pretrained(model_id, token=HF_TOKEN)
+
+    if dir  :
+        model_id = model_id if dir is None else dir
+        model = PeftModel.from_pretrained(model, model_id)
     return model, processor
 
 
-def load_paligemma() -> (AutoModelForImageTextToText, AutoProcessor):
+def load_paligemma(dir : str | None = None) -> (AutoModelForImageTextToText, AutoProcessor):
     model_id = "google/paligemma2-3b-pt-224"
-    model = PaliGemmaForConditionalGeneration.from_pretrained(model_id, dtype=torch.bfloat16, device_map="auto")
-    processor = PaliGemmaProcessor.from_pretrained(model_id)
+    processor = PaliGemmaProcessor.from_pretrained(model_id, token = config.HF_TOKEN)
+    model = PaliGemmaForConditionalGeneration.from_pretrained(model_id, dtype=torch.bfloat16, token = config.HF_TOKEN)
+
+    if dir  :
+        model_id = model_id if dir is None else dir
+        model = PeftModel.from_pretrained(model, model_id)
     return model, processor
 
 
-def load_qwenvl_v3() -> (AutoModelForImageTextToText, AutoProcessor) :
+def load_qwenvl_v3(dir : str | None = None) -> (AutoModelForImageTextToText, AutoProcessor) :
     model_id = "Qwen/Qwen3-VL-4B-Instruct"
+    processor = AutoProcessor.from_pretrained(model_id, token= config.HF_TOKEN)
     model = Qwen3VLForConditionalGeneration.from_pretrained(
-        model_id, dtype="auto", device_map="auto"
+        model_id, dtype="auto", token = config.HF_TOKEN
     )
-    processor = AutoProcessor.from_pretrained(model_id)
+
+    if dir  :
+        model_id = model_id if dir is None else dir
+        model = PeftModel.from_pretrained(model, model_id)
     return model, processor
