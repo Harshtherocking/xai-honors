@@ -16,15 +16,29 @@ def preprocess_function(samples, processor):
     # paths = [os.path.join(config.IMAGE_PATH , p) for p in paths]
 
     images = []
-    for p, url in zip(paths,images_url):
-        if os.path.exists(p) :
-            images.append(Image.open(p))
-        else :
-            try :
-                images.append(Image.open(io.BytesIO(requests.get(url).content)))
+    # for p, url in zip(paths,images_url):
+    #     if os.path.exists(p) :
+    #         images.append(Image.open(p))
+    #     else :
+    #         try :
+    #             images.append(Image.open(io.BytesIO(requests.get(url).content)))
+    #         except Exception as e:
+    #             print(f"Exception : {e}\nFile : {p}\n --- using black image")
+    #             images.append(np.zeros(shape=(244,244,3)))
+
+    for p, url in zip(paths, images_url):
+        if os.path.exists(p):
+            with Image.open(p) as img:
+                img.load()
+                images.append(img.copy())
+        else:
+            try:
+                with Image.open(io.BytesIO(requests.get(url).content)) as img:
+                    img.load()
+                    images.append(img.copy())
             except Exception as e:
                 print(f"Exception : {e}\nFile : {p}\n --- using black image")
-                images.append(np.zeros(shape=(244,244,3)))
+                images.append(np.zeros(shape=(244, 244, 3)))
 
     captions = samples.get("product_title")
 
