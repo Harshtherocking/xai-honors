@@ -42,11 +42,14 @@ if __name__ == "__main__":
     # print(model)
 
 
-    # ------------------------------------------------------------------------------------------
-    # dataset = load_dataset_from_hub(processor, split="train", subset_size= 2)
-    # val_dataset = load_dataset_from_hub(processor, split="validation", subset_size= 2)
-    # train(model, dataset, processor, val_dataset)
-    # ------------------------------------------------------------------------------------------
+    ------------------------------------------------------------------------------------------
+    dataset = load_dataset_from_hub(processor, split="train")
+    val_dataset = load_dataset_from_hub(processor, split="validation")
+    train(model, dataset, processor, val_dataset)
+    ------------------------------------------------------------------------------------------
+
+    print("Execution Completed")
+    exit()
 
 
 
